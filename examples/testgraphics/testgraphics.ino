@@ -42,6 +42,8 @@ void setup() {
     testScrollText();   // Demonstrate scrolling text
 
     testDrawImage();    // Draw image from memory
+
+    testAnimation();    // Simple animation    
 }
 
 void loop() {
@@ -329,4 +331,46 @@ void testDrawImage() {
     Display.clear();
     Display.image(img_arduinologobw, (Display.width() - img_arduinologobw.width())/2, (Display.height() - img_arduinologobw.height())/2);
     Display.endDraw();
+    delay(2000);
+}
+
+void testAnimation() {
+    const int radius = 4;
+    const int frameDelay = 20;
+    const int frames = 300;
+
+    int x = Display.width()  / 2;
+    int y = Display.height() / 2;
+
+    int vx = 2;
+    int vy = 2;
+
+    Display.beginDraw();
+    Display.background(0, 0, 0);
+    Display.clear();
+    Display.endDraw();
+
+    for (int i = 0; i < frames; i++) {
+        x += vx;
+        y += vy;
+
+        if (x - radius <= 0 || x + radius >= Display.width()) {
+            vx = -vx;
+        }
+        if (y - radius <= 0 || y + radius >= Display.height()) {
+            vy = -vy;
+        }
+
+        Display.beginDraw();
+        Display.clear();
+
+        Display.noStroke();
+        Display.fill(255, 255, 255); 
+        Display.circle(x, y, radius * 2);
+
+        Display.endDraw();
+        delay(frameDelay);
+    }
+
+    delay(2000);
 }
