@@ -1,3 +1,10 @@
+/*
+  Copyright (c) 2026 Arduino SA
+  This Source Code Form is subject to the terms of the Mozilla
+  Public License (MPL), v 2.0. You can obtain a copy of the MPL
+  at http://mozilla.org/MPL/2.0/
+*/
+
 #include "Arduino_SSD1306.h"
 
 // Core SSD1306 commands
