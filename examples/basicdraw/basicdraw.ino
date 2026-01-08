@@ -5,27 +5,26 @@
 #include <Wire.h>
 #include "Arduino_SSD1306.h"
 
-Arduino_SSD1306 Display(128, 64, &Wire1);
+#define SCREEN_WIDTH    128 // OLED display width, in pixels
+#define SCREEN_HEIGHT   64 // OLED display height, in pixels
+#define SCREEN_ADDRESS  0x3C // I2C address for the SSD1306
+
+Arduino_SSD1306 Display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire1, SCREEN_ADDRESS);
 
 void setup() {
-
-  Wire.begin();
-
   if (!Display.begin()) {
-      while (1) {
-        // error loop
-      }
+      while (1) ;
   }
 
   Display.beginDraw();
-  Display.background(0);     // schermo nero
-  Display.stroke(255);       // colore bianco
+  Display.background(0);
+  Display.stroke(255);
   Display.textFont(Font_5x7);
 
   Display.text("Hello!", 10, 10);
   Display.circle(64, 40, 15);
 
-  Display.endDraw(); // aggiorna il display
+  Display.endDraw();
 }
 
 void loop() {

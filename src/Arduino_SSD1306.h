@@ -20,7 +20,7 @@ public:
     Arduino_SSD1306(
         int width = 128,
         int height = 64,
-        TwoWire *wire = &Wire,
+        TwoWire *wire = &Wire1,
         uint8_t address = 0x3C
     );
 
