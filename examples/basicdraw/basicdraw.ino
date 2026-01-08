@@ -1,6 +1,7 @@
-/*
-  BasicDrawingSSD1306
-*/
+/**
+ * This sketch initializes an SSD1306 OLED display via I2C and renders
+ * simple graphics including text and shapes (circle) on the screen.
+ */
 
 #include <Wire.h>
 #include "Arduino_SSD1306.h"
@@ -12,20 +13,24 @@
 Arduino_SSD1306 Display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire1, SCREEN_ADDRESS);
 
 void setup() {
-  if (!Display.begin()) {
-      while (1) ;
-  }
+    Serial.begin(115200);
+    
+    if (!Display.begin()) {
+        Serial.println("SSD1306 Display allocation failed");
+        while (1) ;
+    }
 
-  Display.beginDraw();
-  Display.background(0);
-  Display.stroke(255);
-  Display.textFont(Font_5x7);
+    Display.beginDraw();
+    Display.background(0, 0, 0);
+    Display.stroke(255, 255, 255);
+    Display.textFont(Font_5x7);
 
-  Display.text("Hello!", 10, 10);
-  Display.circle(64, 40, 15);
+    Display.text("Hello Arduino!", 10, 10);
+    Display.circle(64, 40, 15);
 
-  Display.endDraw();
+    Display.endDraw();
 }
 
 void loop() {
+    // Nothing to do here
 }

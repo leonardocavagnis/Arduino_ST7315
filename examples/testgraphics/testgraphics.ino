@@ -1,31 +1,54 @@
+
+/**
+ * This sketch initializes an SSD1306 OLED display via I2C and demonstrates various 
+ * graphics capabilities of the library including drawing lines, rectangles, circles, 
+ * text rendering with different styles and sizes, scrolling text effects, and image display.
+ */
+
 #include <Wire.h>
 #include "Arduino_SSD1306.h"
+#include "img_arduinologobw.h"
 
-#define SCREEN_WIDTH    128 // OLED display width, in pixels
-#define SCREEN_HEIGHT   64 // OLED display height, in pixels
-#define SCREEN_ADDRESS  0x3C // I2C address for the SSD1306
+#define SCREEN_WIDTH    128   // OLED display width, in pixels
+#define SCREEN_HEIGHT   64    // OLED display height, in pixels
+#define SCREEN_ADDRESS  0x3C  // I2C address for the SSD1306
 
 Arduino_SSD1306 Display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire1, SCREEN_ADDRESS);
 
-void setup() {
-  if (!Display.begin()) {
-      while (1) ;
-  }
+Image img_arduinologobw(ENCODING_RGB16, (uint8_t *) img_arduinologobw_raw, 60, 60);
 
-  testdrawline();      // Draw many lines
-  testdrawrect();      // Draw rectangles
-  testfillrect();      // Draw filled rectangles
-  testdrawcircle();    // Draw circles
-  testfillcircle();    // Draw filled circles 
-  testdrawchar();      // Draw characters
-  testDrawStyles();   // Demonstrate text styles
-  testscrolltext();   // Demonstrate scrolling text
+void setup() {
+    Serial.begin(115200);
+    
+    if (!Display.begin()) {
+        Serial.println("SSD1306 Display allocation failed");
+        while (1) ;
+    }
+
+    testDrawLine();     // Draw many lines
+
+    testDrawRect();     // Draw rectangles
+
+    testFillRect();     // Draw filled rectangles
+
+    testDrawCircle();   // Draw circles
+
+    testFillCircle();   // Draw filled circles 
+
+    testDrawChar();     // Draw characters
+
+    testDrawStyles();   // Demonstrate text styles
+
+    testScrollText();   // Demonstrate scrolling text
+
+    testDrawImage();    // Draw image from memory
 }
 
 void loop() {
+    // Nothing to do here
 }
 
-void testdrawline() {
+void testDrawLine() {
   int16_t i;
 
   // Clear display buffer
@@ -114,7 +137,7 @@ void testdrawline() {
   delay(2000);
 }
 
-void testdrawrect(void) {
+void testDrawRect(void) {
   Display.beginDraw();
   Display.clear();
   Display.endDraw();
@@ -131,7 +154,7 @@ void testdrawrect(void) {
   delay(2000);
 }
 
-void testfillrect(void) {
+void testFillRect(void) {
     Display.beginDraw();
     Display.clear();
     Display.endDraw();
@@ -149,7 +172,7 @@ void testfillrect(void) {
   delay(2000);
 }
 
-void testdrawcircle(void) {
+void testDrawCircle(void) {
     Display.beginDraw();
     Display.clear();
     Display.endDraw();
@@ -166,7 +189,7 @@ void testdrawcircle(void) {
   delay(2000);
 }
 
-void testfillcircle(void) {
+void testFillCircle(void) {
     Display.beginDraw();
     Display.clear();
     Display.endDraw();
@@ -184,7 +207,7 @@ void testfillcircle(void) {
   delay(2000);
 }
 
-void testdrawchar(void) {
+void testDrawChar(void) {
   int maxCols = Display.width()  / 6; // 5px + 1px spacing (Font_5x7)
   int maxRows = Display.height() / 8; // 7px + 1px spacing (Font_5x7)
   
@@ -257,7 +280,7 @@ void testDrawStyles() {
     delay(2000);
 }
 
-void testscrolltext() {
+void testScrollText() {
     const char* text = "scroll"; // Text to scroll
     int speed = 50;              // Scroll speed in ms per pixel
 
@@ -298,4 +321,12 @@ void testscrolltext() {
     Display.textScrollSpeed(speed);
     Display.print(text);
     Display.endText(SCROLL_UP);
+}
+
+void testDrawImage() {
+    Display.beginDraw();
+    Display.background(255, 255, 255); // White background
+    Display.clear();
+    Display.image(img_arduinologobw, (Display.width() - img_arduinologobw.width())/2, (Display.height() - img_arduinologobw.height())/2);
+    Display.endDraw();
 }
