@@ -25,8 +25,6 @@
 
 // ST7315 Commands
 #define ST7315_DISPLAYOFF          0xAE
-#define ST7315_LOWCOLUMNADDR       0x00
-#define ST7315_HIGHCOLUMNADDR      0x10
 #define ST7315_DISPLAYON           0xAF
 #define ST7315_COLUMNADDR          0x21
 #define ST7315_PAGEADDR            0x22
@@ -37,13 +35,11 @@
 #define ST7315_CHARGEPUMP          0x8D
 #define ST7315_MEMORYMODE          0x20
 #define ST7315_SEGREMAP            0xA1
-#define ST7315_COMOUTSCANDIR       0xC8
+#define ST7315_COMSCANDEC          0xC8
 #define ST7315_SETPRECHARGE        0xD9
 #define ST7315_SETVCOMDETECT       0xDB
 #define ST7315_DISPLAYALLON_RESUME 0xA4
 #define ST7315_NORMALDISPLAY       0xA6
-#define ST7315_COMPINSHWCONFIG     0xDA
-#define ST7315_SETCONTRAST         0x81
 
 Arduino_ST7315::Arduino_ST7315(int width, int height, TwoWire *wire, uint8_t address)
     : ArduinoGraphics(width, height)
@@ -72,34 +68,25 @@ int Arduino_ST7315::begin()
 
     _wire->begin();
 
-    // Power up sequence (Datasheet recommended)
+    // Init sequence
     const uint8_t initCmds[] = {
-        ST7315_DISPLAYOFF,
-        ST7315_LOWCOLUMNADDR,
-        ST7315_HIGHCOLUMNADDR,
-        ST7315_SETDISPLAYCLOCKDIV, 0x80,
-        ST7315_SETMULTIPLEX, 0x3F,
-        ST7315_SETDISPLAYOFFSET, 0x00,
-        ST7315_SETSTARTLINE,
-        ST7315_SEGREMAP,
-        ST7315_COMOUTSCANDIR,
-        ST7315_COMPINSHWCONFIG, 0x12,
-        ST7315_SETCONTRAST, 0xCF,
-        ST7315_SETPRECHARGE, 0x22,
-        ST7315_SETVCOMDETECT, 0x30,
-        ST7315_DISPLAYALLON_RESUME,
-        ST7315_NORMALDISPLAY
+        ST7315_DISPLAYOFF,                  // 0xAE: Display OFF during setup
+        ST7315_SETDISPLAYCLOCKDIV, 0x80,    // 0xD5 0x80: Set display clock divide ratio / oscillator frequency
+        ST7315_SETMULTIPLEX, 0x3F,          // 0xA8 0x3F: Multiplex ratio = 63 (64 rows)
+        ST7315_SETDISPLAYOFFSET, 0x00,      // 0xD3 0x00: Display offset = 0 (no vertical shift)
+        ST7315_SETSTARTLINE | 0x00,         // 0x40: Set display start line at 0
+        ST7315_CHARGEPUMP, 0x14,            // 0x8D 0x14: Enable charge pump (internal DC-DC)
+        ST7315_MEMORYMODE, 0x00,            // 0x20 0x00: Set memory addressing mode to page addressing
+        ST7315_SEGREMAP,                    // 0xA1: Segment remap (flip horizontal direction)
+        ST7315_COMSCANDEC,                  // 0xC8: COM output scan direction = remapped (flip vertical direction)
+        ST7315_SETPRECHARGE, 0xF1,          // 0xD9 0xF1: Set pre-charge period for stable pixel voltage
+        ST7315_SETVCOMDETECT, 0x40,         // 0xDB 0x40: Set VCOMH deselect level (for contrast stabilization)
+        ST7315_DISPLAYALLON_RESUME,         // 0xA4: Resume to RAM content display (ignore "all on")
+        ST7315_NORMALDISPLAY                // 0xA6: Set normal display mode (not inverted)
     };
     commandList(initCmds, sizeof(initCmds));
-    
-    clearDisplay();
-    updateDisplay();
-
-    const uint8_t postInitCmds[] = {
-        ST7315_CHARGEPUMP, 0x14,
-        ST7315_DISPLAYON
-    };
-    commandList(postInitCmds, sizeof(postInitCmds));
+    // Turn display ON as the last step to avoid glitches
+    command(ST7315_DISPLAYON);              // 0xAF: Display ON (after all setup commands)
 
     return 1;
 }
