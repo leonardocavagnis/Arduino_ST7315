@@ -25,6 +25,8 @@
 
 // ST7315 Commands
 #define ST7315_DISPLAYOFF          0xAE
+#define ST7315_LOWCOLUMNADDR       0x00
+#define ST7315_HIGHCOLUMNADDR      0x10
 #define ST7315_DISPLAYON           0xAF
 #define ST7315_COLUMNADDR          0x21
 #define ST7315_PAGEADDR            0x22
@@ -35,11 +37,13 @@
 #define ST7315_CHARGEPUMP          0x8D
 #define ST7315_MEMORYMODE          0x20
 #define ST7315_SEGREMAP            0xA1
-#define ST7315_COMSCANDEC          0xC8
+#define ST7315_COMOUTSCANDIR       0xC8
 #define ST7315_SETPRECHARGE        0xD9
 #define ST7315_SETVCOMDETECT       0xDB
 #define ST7315_DISPLAYALLON_RESUME 0xA4
 #define ST7315_NORMALDISPLAY       0xA6
+#define ST7315_COMPINSHWCONFIG     0xDA
+#define ST7315_SETCONTRAST         0x81
 
 Arduino_ST7315::Arduino_ST7315(int width, int height, TwoWire *wire, uint8_t address)
     : ArduinoGraphics(width, height)
@@ -68,25 +72,34 @@ int Arduino_ST7315::begin()
 
     _wire->begin();
 
-    // Init sequence
+    // Power up sequence (Datasheet recommended)
     const uint8_t initCmds[] = {
         ST7315_DISPLAYOFF,
+        ST7315_LOWCOLUMNADDR,
+        ST7315_HIGHCOLUMNADDR,
         ST7315_SETDISPLAYCLOCKDIV, 0x80,
         ST7315_SETMULTIPLEX, 0x3F,
         ST7315_SETDISPLAYOFFSET, 0x00,
-        ST7315_SETSTARTLINE | 0x00,
-        ST7315_CHARGEPUMP, 0x14,
-        ST7315_MEMORYMODE, 0x00,
-        ST7315_SEGREMAP | 0x01,
-        ST7315_COMSCANDEC,
-        ST7315_SETPRECHARGE, 0xF1,
-        ST7315_SETVCOMDETECT, 0x40,
+        ST7315_SETSTARTLINE,
+        ST7315_SEGREMAP,
+        ST7315_COMOUTSCANDIR,
+        ST7315_COMPINSHWCONFIG, 0x12,
+        ST7315_SETCONTRAST, 0xCF,
+        ST7315_SETPRECHARGE, 0x22,
+        ST7315_SETVCOMDETECT, 0x30,
         ST7315_DISPLAYALLON_RESUME,
         ST7315_NORMALDISPLAY
     };
-
     commandList(initCmds, sizeof(initCmds));
-    command(ST7315_DISPLAYON);
+    
+    clearDisplay();
+    updateDisplay();
+
+    const uint8_t postInitCmds[] = {
+        ST7315_CHARGEPUMP, 0x14,
+        ST7315_DISPLAYON
+    };
+    commandList(postInitCmds, sizeof(postInitCmds));
 
     return 1;
 }
@@ -124,6 +137,13 @@ void Arduino_ST7315::set(int x, int y, uint8_t r, uint8_t g, uint8_t b)
         _buffer[index] |= bit;
     } else {
         _buffer[index] &= ~bit;
+    }
+}
+
+void Arduino_ST7315::clearDisplay()
+{
+    if (_buffer) {
+        memset(_buffer, 0, (width() * height()) / 8);
     }
 }
 

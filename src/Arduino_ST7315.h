@@ -34,6 +34,7 @@ public:
 private:
     void command(uint8_t c);
     void commandList(const uint8_t *cmds, uint8_t n);
+    void clearDisplay();
     void updateDisplay();
 
 private:
