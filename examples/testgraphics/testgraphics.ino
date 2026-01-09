@@ -1,19 +1,19 @@
 
 /**
- * This sketch initializes an SSD1306 OLED display via I2C and demonstrates various 
+ * This sketch initializes an ST7315 OLED display via I2C and demonstrates various 
  * graphics capabilities of the library including drawing lines, rectangles, circles, 
  * text rendering with different styles and sizes, scrolling text effects, and image display.
  */
 
 #include <Wire.h>
-#include "Arduino_SSD1306.h"
+#include "Arduino_ST7315.h"
 #include "img_arduinologobw.h"
 
 #define SCREEN_WIDTH    128   // OLED display width, in pixels
 #define SCREEN_HEIGHT   64    // OLED display height, in pixels
-#define SCREEN_ADDRESS  0x3C  // I2C address for the SSD1306
+#define SCREEN_ADDRESS  0x3C  // I2C address for the ST7315
 
-Arduino_SSD1306 Display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire1, SCREEN_ADDRESS);
+Arduino_ST7315 Display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire1, SCREEN_ADDRESS);
 
 Image img_arduinologobw(ENCODING_RGB16, (uint8_t *) img_arduinologobw_raw, 60, 60);
 
@@ -21,7 +21,7 @@ void setup() {
     Serial.begin(115200);
     
     if (!Display.begin()) {
-        Serial.println("SSD1306 Display allocation failed");
+        Serial.println("ST7315 Display allocation failed");
         while (1) ;
     }
 

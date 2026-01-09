@@ -5,24 +5,24 @@
   at http://mozilla.org/MPL/2.0/
 */
 
-#ifndef _ARDUINO_SSD1306_H
-#define _ARDUINO_SSD1306_H
+#ifndef _ARDUINO_ST7315_H
+#define _ARDUINO_ST7315_H
 
 #include <Arduino.h>
 #include <Wire.h>
 #include "ArduinoGraphics.h"
 
-class Arduino_SSD1306 : public ArduinoGraphics
+class Arduino_ST7315 : public ArduinoGraphics
 {
 public:
-    Arduino_SSD1306(
+    Arduino_ST7315(
         int width = 128,
         int height = 64,
         TwoWire *wire = &Wire1,
         uint8_t address = 0x3C
     );
 
-    ~Arduino_SSD1306();
+    ~Arduino_ST7315();
 
     int begin();
     void end();
