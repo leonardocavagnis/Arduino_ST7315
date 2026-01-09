@@ -42,6 +42,8 @@
 #define ST7315_NORMALDISPLAY       0xA6
 #define ST7315_SET_CONTRAST        0x81
 #define ST7315_SET_COM_PINS        0xDA
+#define SSD1306_DEACTIVATE_SCROLL  0x2E
+#define SSD1306_DISPLAYALLON_RESUME 0xA4
 
 Arduino_ST7315::Arduino_ST7315(int width, int height, TwoWire *wire, uint8_t address)
     : ArduinoGraphics(width, height)
@@ -73,26 +75,27 @@ int Arduino_ST7315::begin()
     // Init sequence
     const uint8_t initCmds[] = {
         ST7315_DISPLAYOFF,                  // 0xAE: Display OFF during setup
-        ST7315_COLUMNADDR, 0x00, 0x10,      // 0x21 0x00 0x10: Set lower and higher column start addresses
         ST7315_SETDISPLAYCLOCKDIV, 0x80,    // 0xD5 0x80: Set display clock divide ratio / oscillator frequency
-        ST7315_SET_COM_PINS, 0x12,          // 0xDA 0x12: COM pins hardware configuration
-        ST7315_SETMULTIPLEX, 0x3F,          // 0xA8 0x3F: Multiplex ratio = 63 (64 rows)
+        ST7315_SETMULTIPLEX, (height()-1),  // 0xA8 0x3F: Multiplex ratio = (Display height - 1)
         ST7315_SETDISPLAYOFFSET, 0x00,      // 0xD3 0x00: Display offset = 0 (no vertical shift)
         ST7315_SETSTARTLINE | 0x00,         // 0x40: Set display start line at 0
-        ST7315_SET_CONTRAST, 0x7F,          // 0x81 0x7F: Set contrast (0x7F works well on this module)
-        ST7315_CHARGEPUMP, 0x14,            // 0x8D 0x14: Enable charge pump (internal DC-DC)
+        ST7315_CHARGEPUMP, 0x14,            // 0x8D 0x14: Enable charge pump (internal DC-DC 0x14 / external 0x10)
         ST7315_MEMORYMODE, 0x00,            // 0x20 0x00: Set memory addressing mode to page addressing
         ST7315_SEGREMAP,                    // 0xA1: Segment remap (flip horizontal direction)
         ST7315_COMSCANDEC,                  // 0xC8: COM output scan direction = remapped (flip vertical direction)
-        ST7315_SETPRECHARGE, 0xF1,          // 0xD9 0xF1: Set pre-charge period for stable pixel voltage
-        ST7315_SETVCOMDETECT, 0x20,         // 0xDB 0x40: Set VCOMH deselect level (for contrast stabilization)
-        ST7315_NORMALDISPLAY                // 0xA6: Set normal display mode (not inverted)
+        ST7315_SET_COM_PINS, 0x12,          // 0xDA 0x12: COM pins hardware configuration (FIXME: only for 128x64)
+        ST7315_SET_CONTRAST, 0x7F,          // 0x81 0x7F: Set contrast (FIXME: may need adjustment according to voltage supply and display size)
+        ST7315_SETPRECHARGE, 0xF1,          // 0xD9 0xF1: Set pre-charge period for stable pixel voltage (FIXME: may need adjustment according to voltage supply)
+        ST7315_SETVCOMDETECT, 0x20,         // 0xDB 0x20: Set VCOMH deselect level (for contrast stabilization)
+        SSD1306_DISPLAYALLON_RESUME,        // 0xA4: Resume to RAM content display
+        ST7315_NORMALDISPLAY,               // 0xA6: Set normal display mode (not inverted)
+        SSD1306_DEACTIVATE_SCROLL           // 0x2E: Deactivate scroll if previously enabled
     };
     commandList(initCmds, sizeof(initCmds));
     // Turn display ON as the last step to avoid glitches
     command(ST7315_DISPLAYON);              // 0xAF: Display ON (after all setup commands)
 
-    updateDisplay();
+    updateDisplay(); // Initial display update to clear screen
 
     return 1;
 }
