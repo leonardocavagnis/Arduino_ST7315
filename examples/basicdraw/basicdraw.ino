@@ -1,14 +1,17 @@
-/**
- * This sketch initializes an ST7315 OLED display via I2C and renders
- * simple graphics including text and shapes (circle) on the screen.
- */
+/*
+  Basic Draw Example for ST7315 OLED Display
 
-#include <Wire.h>
+  This example demonstrates basic drawing capabilities
+  of the ST7315 OLED display using the Arduino_ST7315 library.
+  
+  by Leonardo Cavagnis
+*/
+
 #include "Arduino_ST7315.h"
 
-#define SCREEN_WIDTH    128 // OLED display width, in pixels
-#define SCREEN_HEIGHT   64 // OLED display height, in pixels
-#define SCREEN_ADDRESS  0x3C // I2C address for the ST7315
+#define SCREEN_WIDTH    128     // OLED display width, in pixels
+#define SCREEN_HEIGHT   64      // OLED display height, in pixels
+#define SCREEN_ADDRESS  0x3C    // I2C address for the ST7315
 
 Arduino_ST7315 Display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire1, SCREEN_ADDRESS);
 
