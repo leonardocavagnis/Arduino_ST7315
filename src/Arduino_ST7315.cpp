@@ -7,7 +7,23 @@
 
 #include "Arduino_ST7315.h"
 
-// Core ST7315 commands
+// Determine Wire library buffer size
+#if defined(I2C_BUFFER_LENGTH)
+#define WIRE_MAX min(256, I2C_BUFFER_LENGTH) ///< Particle or similar Wire lib
+#elif defined(BUFFER_LENGTH)
+#define WIRE_MAX min(256, BUFFER_LENGTH) ///< AVR or similar Wire lib
+#elif defined(SERIAL_BUFFER_SIZE)
+#define WIRE_MAX                                                               \
+  min(255, SERIAL_BUFFER_SIZE - 1) ///< Newer Wire uses RingBuffer
+#else
+#define WIRE_MAX 32 ///< Use common Arduino core default
+#endif
+
+// ST7315 Wire mode control bytes
+#define ST7315_MODE_COMMAND        0x00 // DC = 0
+#define ST7315_MODE_DATA           0x40 // DC = 1
+
+// ST7315 Commands
 #define ST7315_DISPLAYOFF          0xAE
 #define ST7315_DISPLAYON           0xAF
 #define ST7315_COLUMNADDR          0x21
@@ -113,41 +129,67 @@ void Arduino_ST7315::set(int x, int y, uint8_t r, uint8_t g, uint8_t b)
 
 void Arduino_ST7315::updateDisplay()
 {
-    command(ST7315_COLUMNADDR);
-    command(0);
-    command(width()-1);
+    // ST7315 organizes the screen into pages (8 vertical pixels per page) 
+    // and columns (horizontal pixels). Before sending the framebuffer data, 
+    // we need to tell the display which columns and pages we want to update.
+    uint8_t cmdList[] = {
+        ST7315_COLUMNADDR,          
+        0,                          // Column start address
+        uint8_t(width() - 1),       // Column end address
+        ST7315_PAGEADDR,            
+        0,                          // Page start address
+        uint8_t((height() / 8) - 1) // Page end address
+    };
+    commandList(cmdList, sizeof(cmdList));
 
-    command(ST7315_PAGEADDR);
-    command(0);
-    command((height()/8)-1);
+    // Total number of bytes to transfer
+    uint16_t count = width() * (height() / 8);
+    uint8_t *ptr = _buffer;
 
-    uint16_t total = (width() * height()) / 8;
+    _wire->beginTransmission(_address);
+    _wire->write(ST7315_MODE_DATA);
+    uint16_t bytesOut = 1;
 
-    for (uint16_t i = 0; i < total; i += 16) {
-        _wire->beginTransmission(_address);
-        _wire->write(0x40);
-
-        uint8_t chunk = (total - i >= 16) ? 16 : (total - i);
-
-        for (uint8_t n = 0; n < chunk; n++) {
-            _wire->write(_buffer[i + n]);
+    while (count--) {
+        if (bytesOut >= WIRE_MAX) { // Wire buffer limit (splitting the transmission if needed)
+            _wire->endTransmission();
+            _wire->beginTransmission(_address);
+            _wire->write(ST7315_MODE_DATA);
+            bytesOut = 1;
         }
 
-        _wire->endTransmission();
+        _wire->write(*ptr++);
+        bytesOut++;
     }
+
+    _wire->endTransmission();
 }
 
 void Arduino_ST7315::command(uint8_t c)
 {
     _wire->beginTransmission(_address);
-    _wire->write(0x00);
+    _wire->write(ST7315_MODE_COMMAND);
     _wire->write(c);
     _wire->endTransmission();
 }
 
 void Arduino_ST7315::commandList(const uint8_t *cmds, uint8_t n)
 {
+    _wire->beginTransmission(_address);
+    _wire->write(ST7315_MODE_COMMAND);
+    uint16_t bytesOut = 1;
+
     while (n--) {
-        command(*cmds++);
+        if (bytesOut >= WIRE_MAX) { // Wire buffer limit (splitting the transmission if needed)
+            _wire->endTransmission();
+            _wire->beginTransmission(_address);
+            _wire->write(ST7315_MODE_COMMAND);
+            bytesOut = 1;
+        }
+
+        _wire->write(*cmds++);
+        bytesOut++;
     }
+
+    _wire->endTransmission();
 }
