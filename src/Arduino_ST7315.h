@@ -8,9 +8,8 @@
 #ifndef _ARDUINO_ST7315_H
 #define _ARDUINO_ST7315_H
 
-#include <Arduino.h>
-#include <Wire.h>
-#include "ArduinoGraphics.h"
+#include <ArduinoGraphics.h>
+#include "Arduino_ST7315_Driver.h"
 
 class Arduino_ST7315 : public ArduinoGraphics
 {
@@ -22,25 +21,17 @@ public:
         uint8_t address = 0x3C
     );
 
-    ~Arduino_ST7315();
+    ~Arduino_ST7315() {}
 
-    int begin();
-    void end();
+    int begin() override;
+    void end() override;
 
-    virtual void beginDraw();
-    virtual void endDraw();
-    virtual void set(int x, int y, uint8_t r, uint8_t g, uint8_t b);
+    void beginDraw() override {}
+    void endDraw() override;
 
-private:
-    void command(uint8_t c);
-    void commandList(const uint8_t *cmds, uint8_t n);
-    void clearDisplay();
-    void updateDisplay();
-
-private:
-    TwoWire   *_wire;
-    uint8_t    _address;
-    uint8_t   *_buffer;
+    void set(int x, int y, uint8_t r, uint8_t g, uint8_t b) override;
+protected:
+    Arduino_ST7315_Driver _driver;
 };
 
-#endif
+#endif // _ARDUINO_ST7315_H
