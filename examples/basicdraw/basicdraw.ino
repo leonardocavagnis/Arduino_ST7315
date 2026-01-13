@@ -11,7 +11,7 @@
 
 #define SCREEN_WIDTH    128     // OLED display width, in pixels
 #define SCREEN_HEIGHT   64      // OLED display height, in pixels
-#define SCREEN_ADDRESS  0x3C    // I2C address for the ST7315
+#define SCREEN_ADDRESS  0x3D    // I2C address for the ST7315
 
 Arduino_ST7315 Display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire1, SCREEN_ADDRESS);
 

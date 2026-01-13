@@ -17,7 +17,7 @@ public:
         int width = 128,
         int height = 64,
         TwoWire *wire = &Wire1,
-        uint8_t address = 0x3C
+        uint8_t address = 0x3D
     );
 
     ~Arduino_ST7315_Driver();
