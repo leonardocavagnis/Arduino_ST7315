@@ -11,6 +11,10 @@
 #include <ArduinoGraphics.h>
 #include "Arduino_ST7315_Driver.h"
 
+// @class Arduino_ST7315
+// @inherits ArduinoGraphics
+// @brief This class provides a graphics abstraction for the ST7315 OLED display using the ArduinoGraphics library.
+
 class Arduino_ST7315 : public ArduinoGraphics
 {
 public:
@@ -31,7 +35,7 @@ public:
 
     void set(int x, int y, uint8_t r, uint8_t g, uint8_t b) override;
 protected:
-    Arduino_ST7315_Driver _driver;
+    Arduino_ST7315_Driver _driver; // Low-level driver instance
 };
 
 #endif // _ARDUINO_ST7315_H

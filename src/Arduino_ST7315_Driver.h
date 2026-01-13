@@ -10,6 +10,12 @@
 
 #include <Wire.h>
 
+// @class Arduino_ST7315_Driver
+// @brief Low-level driver for the ST7315 OLED display.
+// This class is intended to be used as a low-level driver for the ST7315 OLED display, 
+// you can use this library in your graphics library
+// or directly to control the display without any graphics abstraction.
+
 class Arduino_ST7315_Driver
 {
 public:
