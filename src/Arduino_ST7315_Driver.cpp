@@ -7,16 +7,15 @@
 
 #include "Arduino_ST7315_Driver.h"
 
-// Determine Wire library buffer size
-#if defined(I2C_BUFFER_LENGTH)
-#define WIRE_MAX min(256, I2C_BUFFER_LENGTH) ///< Particle or similar Wire lib
-#elif defined(BUFFER_LENGTH)
-#define WIRE_MAX min(256, BUFFER_LENGTH) ///< AVR or similar Wire lib
-#elif defined(SERIAL_BUFFER_SIZE)
-#define WIRE_MAX                                                               \
-  min(255, SERIAL_BUFFER_SIZE - 1) ///< Newer Wire uses RingBuffer
+// Determine Wire library max buffer size
+#if defined(I2C_BUFFER_LENGTH)      // e.g, Renesas Wire Lib
+    #define WIRE_MAX_BUF_LEN min(255, I2C_BUFFER_LENGTH)
+#elif defined(BUFFER_LENGTH)        // e.g., AVR Wire Lib
+    #define WIRE_MAX_BUF_LEN min(255, BUFFER_LENGTH)
+#elif defined(SERIAL_BUFFER_SIZE)   // e.g., SAMD Wire Lib uses RingBuffer
+    #define WIRE_MAX_BUF_LEN min(255, SERIAL_BUFFER_SIZE - 1)
 #else
-#define WIRE_MAX 32 ///< Use common Arduino core default
+    #define WIRE_MAX_BUF_LEN 32     // If not defined, assume 32 bytes (conservative default)
 #endif
 
 // ST7315 Wire mode control bytes
@@ -142,34 +141,30 @@ void Arduino_ST7315_Driver::update()
     uint8_t cmdList[] = {
         ST7315_COLUMNADDR,          
         0,                          // Column start address
-        uint8_t(_width - 1),       // Column end address
+        uint8_t(_width - 1),        // Column end address
         ST7315_PAGEADDR,            
         0,                          // Page start address
-        uint8_t((_height / 8) - 1) // Page end address
+        uint8_t((_height / 8) - 1)  // Page end address
     };
     commandList(cmdList, sizeof(cmdList));
 
-    // Total number of bytes to transfer
-    uint16_t count = _width * (_height / 8);
-    uint8_t *ptr = _buffer;
+    const size_t bufferSize = _width * (_height / 8);
+    const uint8_t *ptr      = _buffer;
+    size_t remaining        = bufferSize;
 
-    _wire->beginTransmission(_address);
-    _wire->write(ST7315_MODE_DATA);
-    uint16_t bytesOut = 1;
+    const size_t maxPayload = WIRE_MAX_BUF_LEN - 1; // Reserve 1 byte for mode command byte
 
-    while (count--) {
-        if (bytesOut >= WIRE_MAX) { // Wire buffer limit (splitting the transmission if needed)
-            _wire->endTransmission();
-            _wire->beginTransmission(_address);
-            _wire->write(ST7315_MODE_DATA);
-            bytesOut = 1;
-        }
+    while (remaining > 0) {
+        size_t chunkSize = min(remaining, maxPayload);
 
-        _wire->write(*ptr++);
-        bytesOut++;
+        _wire->beginTransmission(_address);
+        _wire->write(ST7315_MODE_DATA);
+        _wire->write(ptr, chunkSize);
+        _wire->endTransmission();
+
+        ptr       += chunkSize;
+        remaining -= chunkSize;
     }
-
-    _wire->endTransmission();
 }
 
 void Arduino_ST7315_Driver::command(uint8_t c)
@@ -182,21 +177,17 @@ void Arduino_ST7315_Driver::command(uint8_t c)
 
 void Arduino_ST7315_Driver::commandList(const uint8_t *cmds, uint8_t n)
 {
-    _wire->beginTransmission(_address);
-    _wire->write(ST7315_MODE_COMMAND);
-    uint16_t bytesOut = 1;
+    const size_t maxPayload = WIRE_MAX_BUF_LEN - 1; // Reserve 1 byte for command byte
 
-    while (n--) {
-        if (bytesOut >= WIRE_MAX) { // Wire buffer limit (splitting the transmission if needed)
-            _wire->endTransmission();
-            _wire->beginTransmission(_address);
-            _wire->write(ST7315_MODE_COMMAND);
-            bytesOut = 1;
-        }
+    while (n > 0) {
+        size_t chunkSize = min<size_t>(n, maxPayload);
 
-        _wire->write(*cmds++);
-        bytesOut++;
+        _wire->beginTransmission(_address);
+        _wire->write(ST7315_MODE_COMMAND);
+        _wire->write(cmds, chunkSize);
+        _wire->endTransmission();
+
+        cmds += chunkSize;
+        n    -= chunkSize;
     }
-
-    _wire->endTransmission();
 }
